@@ -1,0 +1,28 @@
+{
+  "name": "liquid-edge/documentor",
+  "description": "Useful addon methods for Nova",
+  "autoload": {
+    "psr-4": {
+      "LiquidedgeApp\\Documentor\\": "src/"
+    }
+  },
+  "authors": [
+    {
+      "name": "ryno-liquidedge",
+      "email": "ryno@liquidedge.co.za"
+    }
+  ],
+  "require": {
+
+  },
+  "repositories": [
+    {
+      "type": "composer",
+      "url": "https://repo.packagist.com/liquid-edge/"
+    },
+    {
+      "type": "composer",
+      "url": "https://www.setasign.com/downloads/"
+    }
+  ]
+}
