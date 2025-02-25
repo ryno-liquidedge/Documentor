@@ -126,7 +126,7 @@ class ClassLoader {
 		// Remove the starting and ending comment block lines (/** and */)
 		$doc_comment = trim($doc_comment);
 		$doc_comment = preg_replace('/^\s*\/\*\*|\*\/\s*$/', '', $doc_comment);
-		$doc_comment = "## {$method_example}\n{$doc_comment}\n"; // Add a newline after method name
+		$doc_comment = "#### `{$method_example}`\n{$doc_comment}\n"; // Add a newline after method name
 
 		// Replace line breaks with newlines for easier processing
 		$doc_comment = str_replace("\n", "\n\n", $doc_comment);
@@ -135,7 +135,7 @@ class ClassLoader {
 		$doc_comment = preg_replace_callback('/@param\s+([^\s]+)\s+\$([^\s]+)\s+(.*)/', function ($matches) {
 			// The @param annotation is in the format "@param <type> $<name> <description>"
 			// We want to keep the parameter and description on the same line and format cleanly.
-			return "### `\$" . $matches[2] . "` (" . $matches[1] . "): " . $matches[3] . "\n\n";
+			return "`\$" . $matches[2] . "` (" . $matches[1] . "): " . $matches[3] . "\n\n";
 		}, $doc_comment);
 
 		// Convert @return annotation to Markdown
@@ -143,7 +143,7 @@ class ClassLoader {
 			// The @return annotation is in the format "@return <type> <description>"
 			// We want to format it as a Markdown heading with the return type,
 			// and the description on the same line.
-			return "### Return (" . $matches[1] . "): " . $matches[2] . "\n\n";
+			return " Return (" . $matches[1] . "): " . $matches[2] . "\n\n";
 		}, $doc_comment);
 
 		// Add general text to Markdown (description)
