@@ -72,78 +72,107 @@ class ClassLoader {
 		return null; // Method not found
 	}
 	//--------------------------------------------------------------------------------
+	public function get_method_example($method): string {
+
+		$return_parts = [];
+
+		// Check if the class exists
+		if ($this->class_name) {
+			// Use reflection to get the method
+			if ($this->reflection->hasMethod($method)) {
+				$reflection_method = $this->reflection->getMethod($method);
+				$parameter_arr = $reflection_method->getParameters(); // Get the doc comment of the method
+
+
+				$return_parts[] = '\app\ui::make()->';
+				$return_parts[] = $method;
+				$return_parts[] = '(';
+
+				$param_parts = [];
+				foreach ($parameter_arr as $parameter){
+					$name = "";
+					if($parameter->hasType()) $name = $parameter->getType()." ";
+					$name .= "$".$parameter->getName();
+					$param_parts[] = $name;
+				}
+
+				$return_parts[] = implode(", ", $param_parts);
+				$return_parts[] = ');';
+			}
+		}
+		return implode("", $return_parts); // Method not found
+	}
+	//--------------------------------------------------------------------------------
 
 	/**
- * Converts a PHPDoc comment to Markdown format.
- *
- * This function takes a PHPDoc comment from a method and converts it to a
- * Markdown-formatted string. It supports the following annotations:
- * -
- * @param string $method The name of the method to get the doc comment for.
- * @return string : Converts the annotation to a Markdown heading with the return
- *   type.
- * - Description: The general description of the method is formatted as a
- *   Markdown paragraph.
- */
-public function get_method_markdown(string $method): string {
+	 * Converts a PHPDoc comment to Markdown format.
+	 *
+	 * This function takes a PHPDoc comment from a method and converts it to a
+	 * Markdown-formatted string. It supports the following annotations:
+	 * -
+	 * @param string $method The name of the method to get the doc comment for.
+	 * @return string : Converts the annotation to a Markdown heading with the return
+	 *   type.
+	 * - Description: The general description of the method is formatted as a
+	 *   Markdown paragraph.
+	 */
+	public function get_method_markdown(string $method): string {
 
-    $doc_comment = $this->get_method_doc_string($method);
+		$doc_comment = $this->get_method_doc_string($method);
+		if (!$doc_comment) return "";
 
-    // Remove the starting and ending comment block lines (/** and */)
-    $doc_comment = trim($doc_comment);
-    $doc_comment = preg_replace('/^\s*\/\*\*|\*\/\s*$/', '', $doc_comment);
-    $doc_comment = "## {$method}\n{$doc_comment}\n"; // Add a newline after method name
+		$method_example = $this->get_method_example($method);
 
-    // Replace line breaks with newlines for easier processing
-    $doc_comment = str_replace("\n", "\n\n", $doc_comment);
+		// Remove the starting and ending comment block lines (/** and */)
+		$doc_comment = trim($doc_comment);
+		$doc_comment = preg_replace('/^\s*\/\*\*|\*\/\s*$/', '', $doc_comment);
+		$doc_comment = "## {$method_example}\n{$doc_comment}\n"; // Add a newline after method name
 
-    // Convert @param annotations to Markdown
-    $doc_comment = preg_replace_callback('/@param\s+([^\s]+)\s+\$([^\s]+)\s+(.*)/', function ($matches) {
-        // The @param annotation is in the format "@param <type> $<name> <description>"
-        // We want to keep the parameter and description on the same line and format cleanly.
-        return "### `\$" . $matches[2] . "` (" . $matches[1] . "): " . $matches[3] . "\n\n";
-    }, $doc_comment);
+		// Replace line breaks with newlines for easier processing
+		$doc_comment = str_replace("\n", "\n\n", $doc_comment);
 
-    // Convert @return annotation to Markdown
-    $doc_comment = preg_replace_callback('/@return\s+([^\s]+)\s+(.*)/', function ($matches) {
-        // The @return annotation is in the format "@return <type> <description>"
-        // We want to format it as a Markdown heading with the return type,
-        // and the description on the same line.
-        return "### Return (" . $matches[1] . "): " . $matches[2] . "\n\n";
-    }, $doc_comment);
+		// Convert @param annotations to Markdown
+		$doc_comment = preg_replace_callback('/@param\s+([^\s]+)\s+\$([^\s]+)\s+(.*)/', function ($matches) {
+			// The @param annotation is in the format "@param <type> $<name> <description>"
+			// We want to keep the parameter and description on the same line and format cleanly.
+			return "### `\$" . $matches[2] . "` (" . $matches[1] . "): " . $matches[3] . "\n\n";
+		}, $doc_comment);
 
-    // Add general text to Markdown (description)
-    // Replace the `*` line prefix with Markdown-friendly formatting (paragraphs)
-    $doc_comment = preg_replace('/^\*\s+/', '', $doc_comment);
+		// Convert @return annotation to Markdown
+		$doc_comment = preg_replace_callback('/@return\s+([^\s]+)\s+(.*)/', function ($matches) {
+			// The @return annotation is in the format "@return <type> <description>"
+			// We want to format it as a Markdown heading with the return type,
+			// and the description on the same line.
+			return "### Return (" . $matches[1] . "): " . $matches[2] . "\n\n";
+		}, $doc_comment);
 
-    // Ensure paragraphs are prepended with two newlines, but no newlines before <p> tags
-    $doc_comment = preg_replace_callback('/<p>(.*?)<\/p>/', function($matches) {
-        // Return the paragraph without newlines before it
-        return $matches[1];
-    }, $doc_comment);
+		// Add general text to Markdown (description)
+		// Replace the `*` line prefix with Markdown-friendly formatting (paragraphs)
+		$doc_comment = preg_replace('/^\*\s+/', '', $doc_comment);
 
-    // Format specific options (id, label, value, data) on new lines with added newlines after each description
-    $doc_comment = preg_replace_callback('/`(id|label|value|data|options\[.*?\])`:\s*(.*?)(\n|$)/', function($matches) {
-        // Format these specific options to appear on a new line with markdown bullet points
-        return "\n- `" . $matches[1] . "`: " . $matches[2] . "\n\n";
-    }, $doc_comment);
+		// Ensure paragraphs are prepended with two newlines, but no newlines before <p> tags
+		$doc_comment = preg_replace_callback('/<p>(.*?)<\/p>/', function ($matches) {
+			// Return the paragraph without newlines before it
+			return $matches[1];
+		}, $doc_comment);
 
-    // Remove empty code blocks
-    $doc_comment = preg_replace('/```\s*```/', '', $doc_comment);
+		// Format specific options (id, label, value, data) on new lines with added newlines after each description
+		$doc_comment = preg_replace_callback('/`(id|label|value|data|options\[.*?\])`:\s*(.*?)(\n|$)/', function ($matches) {
+			// Format these specific options to appear on a new line with markdown bullet points
+			return "\n- `" . $matches[1] . "`: " . $matches[2] . "\n\n";
+		}, $doc_comment);
 
-    // Ensure correct Markdown structure (e.g., blank lines between sections)
-    $doc_comment = preg_replace('/\n\s*\n/', "\n", $doc_comment); // Remove consecutive newlines
+		// Remove empty code blocks
+		$doc_comment = preg_replace('/```\s*```/', '', $doc_comment);
 
-    // Add a final newline to the end for cleaner output
-    $doc_comment .= "\n";
+		// Ensure correct Markdown structure (e.g., blank lines between sections)
+		$doc_comment = preg_replace('/\n\s*\n/', "\n", $doc_comment); // Remove consecutive newlines
 
-    return $doc_comment;
-}
+		// Add a final newline to the end for cleaner output
+		$doc_comment .= "\n";
 
-
-
-
-
+		return $doc_comment;
+	}
 
 	//--------------------------------------------------------------------------------
 
