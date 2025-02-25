@@ -78,7 +78,7 @@ class ClassLoader {
 
 		// Check if the class exists
 		if ($this->class_name) {
-			// Use reflection to get the method
+			// Use reflection to get the method.
 			if ($this->reflection->hasMethod($method)) {
 				$reflection_method = $this->reflection->getMethod($method);
 				$parameter_arr = $reflection_method->getParameters(); // Get the doc comment of the method
